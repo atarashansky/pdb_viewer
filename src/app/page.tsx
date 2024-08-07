@@ -36,6 +36,25 @@ function App() {
     fetchPDBData();
   }, [pdbContent, isLoading]);
 
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const content = e.target?.result as string;
+        try {
+          const parsedData = await parsePDBFile(content);
+          setAtoms(parsedData);
+        } catch (error) {
+          console.error("Error parsing PDB file:", error);
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
   return (
     <div>
       <h1>PDB Viewer</h1>
@@ -44,6 +63,7 @@ function App() {
           e.preventDefault();
           const formData = new FormData(e.target as HTMLFormElement);
           const inputText = formData.get("inputText") as string;
+
           setProteinSequence(inputText);
         }}
       >
@@ -70,6 +90,19 @@ function App() {
           <button type="submit">Submit</button>
         </div>
       </form>
+
+      <div style={{ marginTop: "20px" }}>
+        <label htmlFor="pdbFile">Or upload a PDB file: </label>
+        <input
+          type="file"
+          id="pdbFile"
+          accept=".pdb"
+          onChange={(e) => {
+            handleFileUpload(e);
+            setProteinSequence("");
+          }}
+        />
+      </div>
 
       {isLoading && <p>Generating protein structure...</p>}
 
