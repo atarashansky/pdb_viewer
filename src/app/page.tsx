@@ -67,6 +67,9 @@ function App() {
           setProteinSequence(inputText);
         }}
       >
+        <label htmlFor="inputText">
+          Enter protein sequence to view predicted protein structure:
+        </label>
         <div
           style={{
             display: "flex",
@@ -76,6 +79,7 @@ function App() {
           }}
         >
           <textarea
+            id="inputText"
             name="inputText"
             placeholder="Enter protein sequence"
             required
