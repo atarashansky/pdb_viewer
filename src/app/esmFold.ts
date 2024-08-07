@@ -23,11 +23,12 @@ const fetchEsmFoldPdb = async (
 };
 
 export const useEsmFoldPdb = (sequence: string) => {
+  const trimmedSequence = sequence.trim().replace(/[^a-zA-Z0-9]/g, "");
   return useQuery(
-    ["esmFoldPdb", sequence],
-    ({ signal }) => fetchEsmFoldPdb(sequence, signal),
+    ["esmFoldPdb", trimmedSequence],
+    ({ signal }) => fetchEsmFoldPdb(trimmedSequence, signal),
     {
-      enabled: !!sequence,
+      enabled: !!trimmedSequence,
     }
   );
 };
