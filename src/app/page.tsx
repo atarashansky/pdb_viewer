@@ -110,7 +110,7 @@ function App() {
 
       {isLoading && <p>Generating protein structure...</p>}
 
-      <ProteinViewer atoms={atoms} />
+      <ProteinViewer atoms={atoms} maxWidth={500} maxHeight={500} />
     </div>
   );
 }
