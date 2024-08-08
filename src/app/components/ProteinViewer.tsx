@@ -11,6 +11,43 @@ interface ProteinViewerProps {
   maxHeight: number;
 }
 
+const vertexShader = `
+  attribute float size;
+  varying vec3 vPosition;
+
+  void main() {
+    vPosition = position;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    
+    // 300 is a scaling factor that adjusts the size of the atoms based on their distance from the camera
+    gl_PointSize = size * (300.0 / -mvPosition.z); 
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+
+const fragmentShader = `
+  uniform vec3 color;
+  varying vec3 vPosition;
+
+  void main() {
+    vec3 normal;
+    normal.xy = gl_PointCoord * 2.0 - 1.0;
+    float r2 = dot(normal.xy, normal.xy);
+    if (r2 > 1.0) discard;
+    normal.z = sqrt(1.0 - r2);
+
+    // set the light source - coming straight in from the camera
+    vec3 light = normalize(vec3(0.0, 0.0, 1.0));
+    
+    // when the normal vector is perpendicular to the light vector, the dot product is 0
+    // when the normal vector is parallel to the light vector, the dot product is 1
+    float dProd = max(0.0, dot(normal, light)); // max is used to ignore surfaces facing away from the light
+    
+    // scale the color by the dot product. this gives the illusion of a sphere
+    gl_FragColor = vec4(color * dProd, 1.0);
+  }
+`;
+
 const ProteinViewer: React.FC<ProteinViewerProps> = ({
   atoms,
   maxWidth,
@@ -35,18 +72,23 @@ const ProteinViewer: React.FC<ProteinViewerProps> = ({
     mountRef.current.appendChild(renderer.domElement);
 
     const geometry = new THREE.BufferGeometry().setFromPoints(coordinates);
+    geometry.setAttribute(
+      "size",
+      new THREE.Float32BufferAttribute(
+        atoms.map(() => 0.6),
+        1
+      )
+    );
 
-    const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load("/circle.png");
-
-    const material = new THREE.PointsMaterial({
-      color: 0x000000,
-      size: 0.6,
-      map: texture,
-      transparent: true,
-      alphaTest: 0.5,
+    const shaderMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        color: { value: new THREE.Color(0x0000ff) },
+      },
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
     });
-    const points = new THREE.Points(geometry, material);
+
+    const points = new THREE.Points(geometry, shaderMaterial);
     scene.add(points);
 
     const curve = new THREE.CatmullRomCurve3(coordinates);
